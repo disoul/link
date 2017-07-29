@@ -22,13 +22,23 @@ func (res LinkResponse) Encode() (string, error) {
 	return string(bytes), nil
 }
 
-// LinkDecode io.Reader to LinkResponse
-func LinkDecode(body io.Reader) (LinkResponse, error) {
-	var res LinkResponse
-	err := json.NewDecoder(body).Decode(&res)
+// LinkDecode io.Reader to json
+func LinkDecode(body io.Reader, data interface{}) error {
+	err := json.NewDecoder(body).Decode(data)
 	if err != nil {
-		return res, err
+		return err
 	}
 
-	return res, nil
+	return nil
+}
+
+// MapDecode io.Reader to Map
+func MapDecode(body io.Reader) (*map[string]*json.RawMessage, error) {
+	var objmap map[string]*json.RawMessage
+	err := json.NewDecoder(body).Decode(&objmap)
+	if err != nil {
+		return &objmap, err
+	}
+
+	return &objmap, nil
 }

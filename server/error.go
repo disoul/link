@@ -1,6 +1,7 @@
 package server
 
 import "net/http"
+import "fmt"
 
 // LinkErrorCode errCode
 type LinkErrorCode uint16
@@ -9,7 +10,11 @@ type LinkErrorCode uint16
 type LinkError struct {
 	ErrorCode LinkErrorCode
 	ErrorMsg  string
-	Error     error
+	error     error
+}
+
+func (error LinkError) Error() string {
+	return fmt.Sprintf("LinkError: %s\nError: %s", error.ErrorMsg, error.error.Error())
 }
 
 // LinkHTTPHandle handle error to custom ServerHTTP

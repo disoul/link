@@ -3,6 +3,7 @@ package storage
 import "github.com/go-redis/redis"
 
 import "fmt"
+import "link/model"
 
 // RedisConnection use connection struct to connect redis server
 type RedisConnection struct {
@@ -27,6 +28,10 @@ func CreateClient(conn RedisConnection) *redis.Client {
 	}
 
 	return client
+}
+
+func SaveModel(model model.Model) error {
+
 }
 
 // RedisErrorHandle handle redis error

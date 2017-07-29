@@ -8,12 +8,13 @@ import (
 
 func handleRegister(w http.ResponseWriter, r *http.Request) LinkError {
 	type registerModel struct {
-		Id       string
-		TypeName string
-		Address  string
+		Id       string `json:"id"`
+		TypeName string `json:"type"`
+		Address  string `json:"address"`
 	}
+	var data registerModel
 
-	_, err := LinkDecode(r.Body)
+	err := LinkDecode(r.Body, &data)
 	if err != nil {
 		return LinkError{JSON_DECODE_ERROR, "Json Decoder: Can not decode request boay", err}
 	}

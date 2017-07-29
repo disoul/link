@@ -1,8 +1,11 @@
 package main
 
 import (
-	"main/storage"
+	"link/server"
+	"link/storage"
 	"time"
+
+	"github.com/go-redis/redis"
 )
 
 func initRedis() *redis.Client {
@@ -18,4 +21,5 @@ func initRedis() *redis.Client {
 
 func main() {
 	initRedis()
+	server.CreateLinkServer(8888)
 }
