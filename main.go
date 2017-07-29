@@ -3,8 +3,6 @@ package main
 import (
 	"main/storage"
 	"time"
-
-	"github.com/go-redis/redis"
 )
 
 func initRedis() *redis.Client {

@@ -16,12 +16,24 @@ type LinkError struct {
 type LinkHTTPHandle func(http.ResponseWriter, *http.Request) LinkError
 
 // JSON_DECODE_ERROR parse request or response body error
-const JSON_DECODE_ERROR LinkErrorCode = 4001
+const (
+	JSON_DECODE_ERROR LinkErrorCode = 4001
+)
 
 func (fn LinkHTTPHandle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := fn(w, r)
 
 	if err.Error != nil {
-		http.Error(w, err.Error(), 500)
+		res, e := LinkResponse{
+			ErrorCode: err.ErrorCode,
+			ErrorMsg:  err.ErrorMsg,
+		}.Encode()
+		if e != nil {
+			http.Error(w, e.Error(), 500)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, res, 500)
 	}
 }
