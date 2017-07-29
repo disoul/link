@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"link/server"
+	"link/utils"
 	"net/http"
 	"time"
 )
@@ -22,32 +23,32 @@ const (
 
 // ModelType model type
 type ModelType struct {
-	name string
+	Name string
 }
 
 // Model link communication base unit
 type Model struct {
-	_id       string
-	modelType ModelType
-	address   string
+	ID        string
+	ModelType ModelType
+	Address   string
 
-	state    ModelState
-	lastbeat int32
+	State    ModelState
+	Lastbeat int32
 }
 
 // NewModel Model constructor
 func NewModel(typename, address, id string) (Model, error) {
 	// 直接提供id说明为重启的Model
-	if id != "" {
-		// TODO: search redis model info
-	}
-
 	modelType := ModelType{typename}
 
 	model := Model{
-		modelType: modelType,
-		address:   address,
-		state:     STATE_IDLE,
+		ModelType: modelType,
+		Address:   address,
+		State:     STATE_IDLE,
+		ID:        id,
+	}
+	if id == "" {
+		model.genModelID()
 	}
 
 	// http communication test
@@ -60,12 +61,10 @@ func NewModel(typename, address, id string) (Model, error) {
 		return model, err
 	}
 
-	dataMap, _ := server.MapDecode(res.Body)
+	dataMap, _ := utils.MapDecode(res.Body)
 	// test not pass
-	if dataMap["data"] != "pong" {
-		var err error
-		err = "Error: ping model address can not get expect response"
-		return model, err
+	if fmt.Sprintf("%x", dataMap["data"]) != "pong" {
+		return model, errors.New("Error: ping model address can not get expect response")
 	}
 
 	return model, nil
@@ -78,7 +77,7 @@ func (model Model) Send(data interface{}) (*http.Response, error) {
 		return &http.Response{}, err
 	}
 
-	res, err := http.Post(model.address, "application/json", bytes.NewReader(byteData))
+	res, err := http.Post(model.Address, "application/json", bytes.NewReader(byteData))
 	if err != nil {
 		return &http.Response{}, err
 	}
@@ -86,10 +85,20 @@ func (model Model) Send(data interface{}) (*http.Response, error) {
 	return res, nil
 }
 
-func genModelID(model Model) string {
-	s := fmt.Sprintf("%s%s%v", model.modelType.name, model.address, time.Now().Unix())
+// Stringify stringify model
+func (model Model) Stringify() (string, error) {
+	bytesData, err := json.Marshal(model)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytesData[:]), nil
+}
+
+func (model *Model) genModelID() {
+	s := fmt.Sprintf("%s%s%v", model.ModelType.Name, model.Address, time.Now().Unix())
 	h := sha1.New()
 	h.Write([]byte(s))
 
-	return fmt.Sprintf("%x".h.Sum(nil))
+	model.ID = string(h.Sum(nil)[:])
 }

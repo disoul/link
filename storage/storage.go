@@ -1,9 +1,11 @@
 package storage
 
-import "github.com/go-redis/redis"
+import (
+	"fmt"
+	"link/model"
 
-import "fmt"
-import "link/model"
+	"github.com/go-redis/redis"
+)
 
 // RedisConnection use connection struct to connect redis server
 type RedisConnection struct {
@@ -30,8 +32,23 @@ func CreateClient(conn RedisConnection) *redis.Client {
 	return client
 }
 
-func SaveModel(model model.Model) error {
+// UpdateModel save/update model to redis
+func UpdateModel(model model.Model, client *redis.Client) error {
+	modelString, err := model.Stringify()
+	if err != nil {
+		return err
+	}
 
+	err = client.Set(
+		fmt.Sprintf("link-model@%s", model.ID),
+		modelString,
+		0,
+	).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // RedisErrorHandle handle redis error

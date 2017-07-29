@@ -20,6 +20,6 @@ func initRedis() *redis.Client {
 }
 
 func main() {
-	initRedis()
-	server.CreateLinkServer(8888)
+	client := initRedis()
+	server.CreateLinkServer(client, 8888)
 }
