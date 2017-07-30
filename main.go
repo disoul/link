@@ -20,6 +20,6 @@ func initRedis() *redis.Client {
 }
 
 func main() {
-	client := initRedis()
-	server.CreateLinkServer(client, 8888)
+	db := storage.InitDatabase("localhost")
+	server.CreateLinkServer(db, 8888)
 }

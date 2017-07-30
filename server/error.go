@@ -22,9 +22,11 @@ type LinkHTTPHandle func(http.ResponseWriter, *http.Request) LinkError
 
 // JSON_DECODE_ERROR parse request or response body error
 const (
+	JSON_ENCODE_ERROR LinkErrorCode = 4000
 	JSON_DECODE_ERROR LinkErrorCode = 4001
 	MODEL_INIT_ERROR  LinkErrorCode = 4002
 	REDIS_SAVE_ERROR  LinkErrorCode = 4003
+	UNEXPECT_MESSAGE  LinkErrorCode = 4004
 )
 
 func (fn LinkHTTPHandle) ServeHTTP(w http.ResponseWriter, r *http.Request) {

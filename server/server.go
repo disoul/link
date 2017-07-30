@@ -7,10 +7,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-redis/redis"
+	"gopkg.in/mgo.v2"
 )
 
-var redisClient *redis.Client
+var linkDatabase *mgo.Database
 
 func handleRegister(w http.ResponseWriter, r *http.Request) LinkError {
 	type registerModel struct {
@@ -30,19 +30,46 @@ func handleRegister(w http.ResponseWriter, r *http.Request) LinkError {
 		return LinkError{MODEL_INIT_ERROR, "Register Model: init Model fail", err}
 	}
 
-	err = storage.UpdateModel(model, redisClient)
+	id, err := storage.UpsertModel(model, linkDatabase)
 	if err != nil {
 		return LinkError{REDIS_SAVE_ERROR, "Register Model: save to redis faild", err}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	res, err := LinkResponse{Data: id}.Encode()
+	if err != nil {
+		return LinkError{JSON_ENCODE_ERROR, "Json Encoder: Can not encode response boay", err}
+	}
+	w.Write([]byte(res))
+
+	return LinkError{error: nil}
+}
+
+// sendMessage core handle in link
+// send messages between 2 models
+func sendMessage(w http.ResponseWriter, r *http.Request) LinkError {
+	type LinkMessage struct {
+		targetID    string
+		targetQuery map[string]string
+		originID    string
+		message     map[string]string
+	}
+	var message LinkMessage
+
+	err := LinkDecode(r.Body, &message)
+	if err != nil {
+		return LinkError{UNEXPECT_MESSAGE, "can not decode message with LinkMessage", err}
 	}
 
 	return LinkError{error: nil}
 }
 
 // CreateLinkServer create link base http server
-func CreateLinkServer(client *redis.Client, port uint32) {
-	redisClient = client
+func CreateLinkServer(db *mgo.Database, port uint32) {
+	linkDatabase = db
 
 	http.HandleFunc("/register", LinkHTTPHandle(handleRegister).ServeHTTP)
+	http.HandleFunc("/send", LinkHTTPHandle(sendMessage).ServeHTTP)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%v", port), nil)
 	if err != nil {

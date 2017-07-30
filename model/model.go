@@ -2,13 +2,12 @@ package model
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"link/utils"
 	"net/http"
-	"time"
+	"strconv"
 )
 
 // ModelState model state
@@ -47,10 +46,6 @@ func NewModel(typename, address, id string) (Model, error) {
 		State:     STATE_IDLE,
 		ID:        id,
 	}
-	if id == "" {
-		model.genModelID()
-	}
-
 	// http communication test
 	initData := map[string]string{
 		"data": "ping",
@@ -85,20 +80,33 @@ func (model Model) Send(data interface{}) (*http.Response, error) {
 	return res, nil
 }
 
-// Stringify stringify model
-func (model Model) Stringify() (string, error) {
-	bytesData, err := json.Marshal(model)
-	if err != nil {
-		return "", err
-	}
+// Mapify mapify model to save
+func (model Model) Mapify() map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields["id"] = model.ID
+	fields["type"] = model.ModelType.Name
+	fields["address"] = model.Address
+	fields["state"] = string(model.State)
+	fields["lastbeat"] = string(model.Lastbeat)
 
-	return string(bytesData[:]), nil
+	return fields
 }
 
-func (model *Model) genModelID() {
-	s := fmt.Sprintf("%s%s%v", model.ModelType.Name, model.Address, time.Now().Unix())
-	h := sha1.New()
-	h.Write([]byte(s))
+// ParseModel parse model string to Model
+func ParseModel(fields map[string]string) (Model, error) {
+	stateVal, err := strconv.Atoi(fields["state"])
+	beatVal, err := strconv.Atoi(fields["lastbeat"])
+	if err != nil {
+		return Model{}, err
+	}
 
-	model.ID = string(h.Sum(nil)[:])
+	modelState := ModelState(uint8(stateVal))
+
+	return Model{
+		fields["id"],
+		ModelType{fields["typename"]},
+		fields["address"],
+		modelState,
+		int32(beatVal),
+	}, nil
 }
