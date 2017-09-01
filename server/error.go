@@ -31,11 +31,10 @@ const (
 
 func (fn LinkHTTPHandle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := fn(w, r)
-
-	if err.Error != nil {
+	if err.error != nil {
 		res, e := LinkResponse{
 			ErrorCode: err.ErrorCode,
-			ErrorMsg:  err.ErrorMsg,
+			ErrorMsg:  err.Error(),
 		}.Encode()
 		if e != nil {
 			http.Error(w, e.Error(), 500)

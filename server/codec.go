@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 )
@@ -30,4 +31,12 @@ func LinkDecode(body io.Reader, data interface{}) error {
 	}
 
 	return nil
+}
+
+// LinkDecodeString io.Reader to string
+func LinkDecodeString(body io.Reader) string {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(body)
+
+	return buf.String()
 }

@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"link/utils"
 	"net/http"
-	"strconv"
 )
 
 // ModelState model state
@@ -27,7 +25,7 @@ type ModelType struct {
 
 // Model link communication base unit
 type Model struct {
-	ID        string
+	ID        int32
 	ModelType ModelType
 	Address   string
 
@@ -36,7 +34,7 @@ type Model struct {
 }
 
 // NewModel Model constructor
-func NewModel(typename, address, id string) (Model, error) {
+func NewModel(typename, address string, id int32) (Model, error) {
 	// 直接提供id说明为重启的Model
 	modelType := ModelType{typename}
 
@@ -58,7 +56,7 @@ func NewModel(typename, address, id string) (Model, error) {
 
 	dataMap, _ := utils.MapDecode(res.Body)
 	// test not pass
-	if fmt.Sprintf("%x", dataMap["data"]) != "pong" {
+	if string(dataMap["data"]) != `"pong"` {
 		return model, errors.New("Error: ping model address can not get expect response")
 	}
 
@@ -90,23 +88,4 @@ func (model Model) Mapify() map[string]interface{} {
 	fields["lastbeat"] = string(model.Lastbeat)
 
 	return fields
-}
-
-// ParseModel parse model string to Model
-func ParseModel(fields map[string]string) (Model, error) {
-	stateVal, err := strconv.Atoi(fields["state"])
-	beatVal, err := strconv.Atoi(fields["lastbeat"])
-	if err != nil {
-		return Model{}, err
-	}
-
-	modelState := ModelState(uint8(stateVal))
-
-	return Model{
-		fields["id"],
-		ModelType{fields["typename"]},
-		fields["address"],
-		modelState,
-		int32(beatVal),
-	}, nil
 }
